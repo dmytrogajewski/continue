@@ -44,6 +44,8 @@ class Nestor extends BaseLLM {
   protected async _getHeaders() {
     // For those who unfamiliar - this token provided by IDE itself via its Spirit authentication plugin
     // Actual refresh token logic is there, NOT in core. Why? Because.
+
+    // Maybe replace auth in control plane instead? Should work
     let results = await this.secretGetter(["spirit-token"])
     const token: string = results.value;
 
