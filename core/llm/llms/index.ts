@@ -4,6 +4,7 @@ import {
   ILLM,
   LLMOptions,
   ModelDescription,
+  IDE,
 } from "../..";
 import { renderTemplatedString } from "../../promptFiles/v1/renderTemplatedString";
 import { BaseLLM } from "../index";
@@ -53,6 +54,7 @@ import VertexAI from "./VertexAI";
 import Vllm from "./Vllm";
 import WatsonX from "./WatsonX";
 import xAI from "./xAI";
+import Nestor from "./Nestor";
 
 export const LLMClasses = [
   Anthropic,
@@ -98,11 +100,16 @@ export const LLMClasses = [
   Nebius,
   VertexAI,
   xAI,
+  Nestor,
   SiliconFlow,
   Scaleway,
 ];
 
+type SecretGetter = (keys: string[]) => Promise<Record<string, string>>;
+
 export async function llmFromDescription(
+  // Continue.dev does not pass secret storage of IDE, but we need if if we want native authentication support
+  secretGetter: SecretGetter,
   desc: ModelDescription,
   readFile: (filepath: string) => Promise<string>,
   uniqueId: string,
@@ -151,10 +158,11 @@ export async function llmFromDescription(
     }
   }
 
-  return new cls(options);
+  return new cls(options, secretGetter);
 }
 
 export function llmFromProviderAndOptions(
+  secretGetter: SecretGetter,
   providerName: string,
   llmOptions: LLMOptions,
 ): ILLM {
@@ -164,5 +172,5 @@ export function llmFromProviderAndOptions(
     throw new Error(`Unknown LLM provider type "${providerName}"`);
   }
 
-  return new cls(llmOptions);
+  return new cls(llmOptions, secretGetter);
 }

@@ -67,6 +67,8 @@ export class JiraClient {
   private readonly options: Required<JiraClientOptions>;
   private baseUrl: string;
   private authHeader;
+  public domain: string = "";
+
   constructor(options: JiraClientOptions) {
     this.options = {
       issueQuery:
@@ -75,6 +77,7 @@ export class JiraClient {
       requestOptions: {},
       ...options,
     };
+    this.domain = options.domain;
     this.baseUrl = `https://${this.options.domain}/rest/api/${this.options.apiVersion}`;
     this.authHeader = this.options.username
       ? {

@@ -29,6 +29,7 @@ import SearchContextProvider from "./SearchContextProvider";
 import TerminalContextProvider from "./TerminalContextProvider";
 import URLContextProvider from "./URLContextProvider";
 import WebContextProvider from "./WebContextProvider";
+import SageContextProvider from "./SageContextProvider";
 
 /**
  * Note: We are currently omitting the following providers due to bugs:
@@ -66,6 +67,7 @@ export const Providers: (typeof BaseContextProvider)[] = [
   MCPContextProvider,
   GitCommitContextProvider,
   ClipboardContextProvider,
+  SageContextProvider,
 ];
 
 export function contextProviderClassFromName(
