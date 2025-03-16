@@ -7,12 +7,18 @@ interface SageClientOptions {
   baseUrl?: string;
   apiToken: string;
   requestOptions?: RequestOptions;
+  resultsSize: number;
 }
 
 interface LogEntry {
-  id: string;
-  level: number;
-  message: string;
+  msg: string;
+  level: string;
+  env: string;
+  "@timestamp": string;
+  system: string;
+  extra: any;
+  inst: string;
+  [key: string]: string
 }
 
 interface QueryResult {
@@ -20,20 +26,20 @@ interface QueryResult {
 }
 
 interface QueryResults {
-  issues: LogEntry[];
+  hits: LogEntry[];
 }
 
 export class SageClient {
   private readonly options: Required<SageClientOptions>;
-  private baseUrl: string = "https://sage.tcsbank.ru";
-  private apiToken: string = "";
 
   constructor(options: SageClientOptions) {
-    const { baseUrl, requestOptions, ...rest } = options;
+    const { baseUrl, requestOptions, resultsSize, apiToken, ...rest } = options;
     
     this.options = {
-      baseUrl: baseUrl || this.baseUrl,
+      baseUrl: baseUrl || "https://sage.tcsbank.ru",
+      apiToken: apiToken || "",
       requestOptions: {},
+      resultsSize: resultsSize || 50,
       ...rest,
     };
   }
@@ -41,13 +47,25 @@ export class SageClient {
   async logs(
     query: string,
   ): Promise<Array<QueryResult>> {
-    const response = await fetch(`${this.baseUrl}/search?fields=id,level,message&query=${ query }`, {
-      method: "GET",
+    const endTime = new Date(); // now
+    const startTime = new Date(endTime.getTime() - 60 * 60 * 1000); // -1h
+    const request = {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${this.apiToken}`,
+        "Authorization": `Bearer ${this.options.apiToken}`,
       },
-    });
+      body: JSON.stringify({
+        query,
+        size: this.options.resultsSize,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+      })
+    }
+
+    console.warn(request);
+
+    const response = await fetch(`${this.options.baseUrl}/mage/api/search`, request);
 
     if (response.status !== 200) {
       throw new Error(`Failed to fetch logs: ${response.statusText}`);
@@ -55,9 +73,8 @@ export class SageClient {
     const result = await response.json();
 
     return result.map((logEntry: any) => ({
-      id: logEntry.id,
       level: logEntry.level,
-      message: logEntry.message,
+      msg: logEntry.msg,
     }));
   }
 }

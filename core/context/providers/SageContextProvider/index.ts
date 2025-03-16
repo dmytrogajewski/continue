@@ -9,14 +9,23 @@ import {
   class SageContextProvider extends BaseContextProvider {
     static description: ContextProviderDescription = {
       title: "sage",
-      displayTitle: "Sage Query results",
+      displayTitle: "SageQuery",
       description: "Get Sage MageQL query results",
-      type: "normal",
+      type: "query",
     };
   
+    constructor(options: Array<{
+      baseUrl: string;
+      apiToken: string;
+      resultsSize: number;
+    }>) {
+      super(options);
+    }
+
     getApi() {
       return new SageClient({
           ...this.options,
+          resultsSize: 50,
           apiToken: this.options.apiToken,
       });
     }
@@ -25,8 +34,6 @@ import {
       query: string,
       extras: ContextProviderExtras,
     ): Promise<ContextItem[]> {
-      const issueId = query;
-  
       const api = this.getApi();
       const logs = await api.logs(query)
       const parts = [
