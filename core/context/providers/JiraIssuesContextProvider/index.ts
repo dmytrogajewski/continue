@@ -44,17 +44,19 @@ class JiraClientManager {
   }
 }
 
+// JiraIssuesContextProvider is context provider itself
 class JiraIssuesContextProvider extends BaseContextProvider {
   static description: ContextProviderDescription = {
     title: "jira",
-    displayTitle: "Jira Issues",
-    description: "Reference Jira issues from multiple instances",
-    type: "submenu",
+    displayTitle: "JiraIssue",
+    description: "Reference Jira issue from supported instances",
+    renderInlineAs: "",
+    type: "query"
   };
 
   private jiraClientManager: JiraClientManager;
 
-  constructor(jiraConfigs: Array<{
+  constructor(options: Array<{
     domain: string;
     email: string;
     token: string;
@@ -62,8 +64,8 @@ class JiraIssuesContextProvider extends BaseContextProvider {
     apiVersion?: string;
     requestOptions?: any;
   }>) {
-    super(jiraConfigs);
-    this.jiraClientManager = new JiraClientManager(jiraConfigs);
+    super(options);
+    this.jiraClientManager = new JiraClientManager(options);
   }
 
   // here we do request one after another in order to limit the number of requests
@@ -76,6 +78,7 @@ class JiraIssuesContextProvider extends BaseContextProvider {
 
     for (const client of this.jiraClientManager.getAllClients().values()) {
       try {
+        console.warn(query)
         const issue = await client.issue(query, extras.fetch);
 
         if (issue) {
@@ -95,10 +98,10 @@ class JiraIssuesContextProvider extends BaseContextProvider {
 
           break; // We exit after finding issue to avoid duplicates.`);
         }
-    } catch (ex) {
-        console.error(`Unable to get Jira issue from ${client.domain}: ${ex}`);
+      } catch (ex) {
+          console.error(`Unable to get Jira issue from ${client.domain}: ${ex}`);
+      }
     }
-  }
 
     if (!content.trim()) return [];
 
@@ -109,30 +112,6 @@ class JiraIssuesContextProvider extends BaseContextProvider {
         description: "Search results across multiple Jira instances",
       },
     ];
-}
-
-  // here we do promise.all for good user experience avoiding long loading times if one of the clients fails.
-  async loadSubmenuItems(
-    args: LoadSubmenuItemsArgs,
-  ): Promise<ContextSubmenuItem[]> {
-  const clientPromises = this.jiraClientManager.getAllClients().map(async (client) => {
-    try {
-        const issues = await client.listIssues(args.fetch);
-
-        return issues.map((issue) => ({
-              id: `${client.domain}-${issue.id}`,
-              title: `${issue.key} from ${client.domain}: ${issue.summary}`,
-              description: "",
-        }));
-    } catch (ex) {
-      console.error(`Unable to get Jira tickets from ${client.domain}: ${ex}`);
-      return [];
-    }
-  });
-
-  const submenuItemsArrays = await Promise.all(clientPromises);
-
-  return submenuItemsArrays.flat();
   }
 }
 

@@ -279,6 +279,7 @@ async function intermediateToFinalConfig(
           const detectedModels = await Promise.all(
             modelNames.map(async (modelName) => {
               return await llmFromDescription(
+                ide.readSecrets.bind(ide),
                 {
                   ...desc,
                   model: modelName,

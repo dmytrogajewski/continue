@@ -2311,47 +2311,51 @@
           "then": {
             "properties": {
               "params": {
-                "properties": {
-                  "domain": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "domain": {
                     "type": "string",
                     "description": "Your Jira domain, for example company.atlassian.net."
-                  },
-                  "email": {
-                    "type": "string",
-                    "description": "The email that you log into Jira with"
-                  },
-                  "token": {
-                    "type": "string",
-                    "description": "Your atlassian API token from https://id.atlassian.com/manage-profile/security/api-tokens"
-                  },
-                  "issueQuery": {
-                    "type": "string",
-                    "description": "Customize the query used to find Jira issues"
-                  },
-                  "apiVersion": {
-                    "type": "integer",
-                    "markdownDescription": "This context provider supports both Jira API version 2 and 3. It will use version 3 by default since that's what the cloud version uses, but if you have the datacenter version of Jira, you'll need to set the API Version to 2 using the `apiVersion` property.",
-                    "x-intellij-html-description": "This context provider supports both Jira API version 2 and 3. It will use version 3 by default since that's what the cloud version uses, but if you have the datacenter version of Jira, you'll need to set the API Version to 2 using the <code>apiVersion</code> property."
-                  },
-                  "requestOptions": {
-                    "title": "Request Options",
-                    "description": "Options for the HTTPS request to Jira.",
-                    "default": {
-                      "timeout": 7200,
-                      "verifySsl": null,
-                      "caBundlePath": null,
-                      "proxy": null,
-                      "headers": null,
-                      "extraBodyProperties": null
                     },
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/RequestOptions"
-                      }
-                    ]
-                  }
-                },
-                "required": ["domain", "token"]
+                    "email": {
+                      "type": "string",
+                      "description": "The email that you log into Jira with"
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "Your atlassian API token from https://id.atlassian.com/manage-profile/security/api-tokens"
+                    },
+                    "issueQuery": {
+                      "type": "string",
+                      "description": "Customize the query used to find Jira issues"
+                    },
+                    "apiVersion": {
+                      "type": "integer",
+                      "markdownDescription": "This context provider supports both Jira API version 2 and 3. It will use version 3 by default since that's what the cloud version uses, but if you have the datacenter version of Jira, you'll need to set the API Version to 2 using the `apiVersion` property.",
+                      "x-intellij-html-description": "This context provider supports both Jira API version 2 and 3. It will use version 3 by default since that's what the cloud version uses, but if you have the datacenter version of Jira, you'll need to set the API Version to 2 using the <code>apiVersion</code> property."
+                    },
+                    "requestOptions": {
+                      "title": "Request Options",
+                      "description": "Options for the HTTPS request to Jira.",
+                      "default": {
+                        "timeout": 7200,
+                        "verifySsl": null,
+                        "caBundlePath": null,
+                        "proxy": null,
+                        "headers": null,
+                        "extraBodyProperties": null
+                      },
+                      "allOf": [
+                        {
+                          "$ref": "#/$defs/RequestOptions"
+                        }
+                      ]
+                    }
+                  },
+                  "required": ["domain", "token"]
+                }
               }
             },
             "required": ["params"]
