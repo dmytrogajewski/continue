@@ -67,14 +67,17 @@ export class JiraClient {
   private readonly options: Required<JiraClientOptions>;
   private baseUrl: string;
   private authHeader;
+  public domain: string = "";
+
   constructor(options: JiraClientOptions) {
     this.options = {
       issueQuery:
         "assignee = currentUser() AND resolution = Unresolved order by updated DESC",
-      apiVersion: "3",
+      apiVersion: "2",
       requestOptions: {},
       ...options,
     };
+    this.domain = options.domain;
     this.baseUrl = `https://${this.options.domain}/rest/api/${this.options.apiVersion}`;
     this.authHeader = this.options.username
       ? {
@@ -93,6 +96,8 @@ export class JiraClient {
   ): Promise<Issue> {
     const result = {} as Issue;
 
+    console.warn(this.baseUrl + `/issue/${issueId}?fields=description,comment,summary`);
+    
     const response = await customFetch(
       new URL(
         this.baseUrl + `/issue/${issueId}?fields=description,comment,summary`,
@@ -135,49 +140,5 @@ export class JiraClient {
       }) ?? [];
 
     return result;
-  }
-
-  async listIssues(
-    customFetch: (url: string | URL, init: any) => Promise<any>,
-  ): Promise<Array<QueryResult>> {
-    const response = await customFetch(
-      new URL(
-        this.baseUrl +
-          `/search?fields=summary&jql=${
-            this.options.issueQuery ??
-            "assignee = currentUser() AND resolution = Unresolved order by updated DESC"
-          }`,
-      ),
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...this.authHeader,
-        },
-      },
-    );
-
-    if (response.status === 500) {
-      const text = await response.text();
-      console.warn(
-        "Unable to get Jira tickets. You may need to set 'apiVersion': 2 in your config.json. See full documentation here: https://docs.continue.dev/customize/context-providers#jira-datacenter-support\n\n",
-        text,
-      );
-      return Promise.resolve([]);
-    } else if (response.status !== 200) {
-      const text = await response.text();
-      console.warn("Unable to get Jira tickets: ", text);
-      return Promise.resolve([]);
-    }
-
-    const data = (await response.json()) as any;
-
-    return (
-      data.issues?.map((issue: any) => ({
-        id: issue.id,
-        key: issue.key,
-        summary: issue.fields.summary,
-      })) ?? []
-    );
   }
 }

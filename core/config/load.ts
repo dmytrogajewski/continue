@@ -260,6 +260,7 @@ async function intermediateToFinalConfig(
   for (const desc of config.models) {
     if (isModelDescription(desc)) {
       const llm = await llmFromDescription(
+        ide.readSecrets.bind(ide),
         desc,
         ide.readFile.bind(ide),
         uniqueId,
@@ -278,6 +279,7 @@ async function intermediateToFinalConfig(
           const detectedModels = await Promise.all(
             modelNames.map(async (modelName) => {
               return await llmFromDescription(
+                ide.readSecrets.bind(ide),
                 {
                   ...desc,
                   model: modelName,
@@ -364,6 +366,7 @@ async function intermediateToFinalConfig(
         ).map(async (desc) => {
           if (isModelDescription(desc)) {
             const llm = await llmFromDescription(
+              ide.readSecrets.bind(ide),
               desc,
               ide.readFile.bind(ide),
               uniqueId,

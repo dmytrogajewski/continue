@@ -6,81 +6,112 @@ import {
   LoadSubmenuItemsArgs,
 } from "../../../index.js";
 import { BaseContextProvider } from "../../index.js";
-
 import { JiraClient } from "./JiraClient.js";
 
-class JiraIssuesContextProvider extends BaseContextProvider {
-  static description: ContextProviderDescription = {
-    title: "jira",
-    displayTitle: "Jira Issues",
-    description: "Reference Jira issues",
-    type: "submenu",
-  };
+class JiraClientManager {
+  private clients: Map<string, JiraClient>;
 
-  private getApi() {
-    return new JiraClient({
-      domain: this.options.domain,
-      username: this.options.email,
-      password: this.options.token,
-      issueQuery: this.options.issueQuery,
-      apiVersion: this.options.apiVersion,
-      requestOptions: this.options.requestOptions,
+  constructor(jiraConfigs: Array<{
+    domain: string;
+    email: string;
+    token: string;
+    issueQuery?: string;
+    apiVersion?: string;
+    requestOptions?: any;
+  }>) {
+    this.clients = new Map();
+
+    jiraConfigs.forEach((config) => {
+      const client = new JiraClient({
+        domain: config.domain,
+        username: config.email,
+        password: config.token,
+        issueQuery: config.issueQuery,
+        apiVersion: config.apiVersion || "2", // Default to API version 2
+        requestOptions: config.requestOptions,
+      });
+
+      this.clients.set(config.domain, client);
     });
   }
 
+  getClient(domain: string): JiraClient | undefined {
+    return this.clients.get(domain);
+  }
+
+  getAllClients(): JiraClient[] {
+    return Array.from(this.clients.values());
+  }
+}
+
+// JiraIssuesContextProvider is context provider itself
+class JiraIssuesContextProvider extends BaseContextProvider {
+  static description: ContextProviderDescription = {
+    title: "jira",
+    displayTitle: "JiraIssue",
+    description: "Reference Jira issue from supported instances",
+    renderInlineAs: "",
+    type: "query"
+  };
+
+  private jiraClientManager: JiraClientManager;
+
+  constructor(options: Array<{
+    domain: string;
+    email: string;
+    token: string;
+    issueQuery?: string;
+    apiVersion?: string;
+    requestOptions?: any;
+  }>) {
+    super(options);
+    this.jiraClientManager = new JiraClientManager(options);
+  }
+
+  // here we do request one after another in order to limit the number of requests
   async getContextItems(
     query: string,
     extras: ContextProviderExtras,
   ): Promise<ContextItem[]> {
-    const issueId = query;
+    const parts = [];
+    let content = "";
 
-    const api = this.getApi();
-    const issue = await api.issue(query, extras.fetch);
+    for (const client of this.jiraClientManager.getAllClients().values()) {
+      try {
+        console.warn(query)
+        const issue = await client.issue(query, extras.fetch);
 
-    const parts = [
-      `# Jira Issue ${issue.key}: ${issue.summary}`,
-      "## Description",
-      issue.description ?? "No description",
-    ];
+        if (issue) {
+          parts.push(`# Jira Issue ${issue.key} from ${client.domain}: ${issue.summary}`);
+          parts.push("## Description");
+          parts.push(issue.description ?? "No description");
 
-    if (issue.comments.length > 0) {
-      parts.push("## Comments");
+          if (issue.comments.length > 0) {
+            parts.push("## Comments");
 
-      parts.push(
-        ...issue.comments.map((comment) => {
-          return `### ${comment.author.displayName} on ${comment.created}\n\n${comment.body}`;
-        }),
-      );
+            issue.comments.forEach((comment) => {
+              parts.push(`### ${comment.author.displayName} on ${comment.created}\n\n${comment.body}`);
+            });
+          }
+
+          content += parts.join("\n\n") + "\n\n";
+
+          break; // We exit after finding issue to avoid duplicates.`);
+        }
+      } catch (ex) {
+          console.error(`Unable to get Jira issue from ${client.domain}: ${ex}`);
+      }
     }
 
-    const content = parts.join("\n\n");
+    if (!content.trim()) return [];
 
     return [
       {
-        name: `${issue.key}: ${issue.summary}`,
+        name: `Multiple Jira Issues for query "${query}"`,
         content,
-        description: issue.key,
+        description: "Search results across multiple Jira instances",
       },
     ];
-  }
-
-  async loadSubmenuItems(
-    args: LoadSubmenuItemsArgs,
-  ): Promise<ContextSubmenuItem[]> {
-    const api = await this.getApi();
-
-    try {
-      const issues = await api.listIssues(args.fetch);
-
-      return issues.map((issue) => ({
-        id: issue.id,
-        title: `${issue.key}: ${issue.summary}`,
-        description: "",
-      }));
-    } catch (ex) {
-      console.error(`Unable to get jira tickets: ${ex}`);
-      return [];
-    }
   }
 }
 

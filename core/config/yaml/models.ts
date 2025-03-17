@@ -24,7 +24,7 @@ function getContinueProxyModelName(
 async function modelConfigToBaseLLM(
   model: ModelConfig,
   uniqueId: string,
-  ideSettings: IdeSettings,
+  ide: IDE,
   writeLog: (log: string) => Promise<void>,
   platformConfigMetadata: PlatformConfigMetadata | undefined,
   systemMessage: string | undefined,
@@ -60,7 +60,7 @@ async function modelConfigToBaseLLM(
     systemMessage,
   };
 
-  const llm = new cls(options);
+  const llm = new cls(options, ide.readSecrets.bind(ide));
   return llm;
 }
 
@@ -90,7 +90,7 @@ async function autodetectModels(
             name: `${llm.title} - ${modelName}`,
           },
           uniqueId,
-          ideSettings,
+          ide,
           writeLog,
           platformConfigMetadata,
           systemMessage,
@@ -116,7 +116,7 @@ export async function llmsFromModelConfig(
   const baseLlm = await modelConfigToBaseLLM(
     model,
     uniqueId,
-    ideSettings,
+    ide,
     writeLog,
     platformConfigMetadata,
     systemMessage,

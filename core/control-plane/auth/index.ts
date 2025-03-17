@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { IdeSettings } from "../..";
 import { getControlPlaneEnv } from "../env";
 
+// We do try connect ours control plane here
 export async function getAuthUrlForTokenPage(
   ideSettingsPromise: Promise<IdeSettings>,
 ): Promise<string> {
