@@ -4,7 +4,7 @@ import {
     ContextProviderExtras,
   } from "../../../index.js";
   import { BaseContextProvider } from "../../index.js";
-  import { SageClient } from "./SageClient.js";
+  import { SageClient, LogEntry } from "./SageClient.js";
 
   class SageContextProvider extends BaseContextProvider {
     static description: ContextProviderDescription = {
@@ -35,12 +35,10 @@ import {
       extras: ContextProviderExtras,
     ): Promise<ContextItem[]> {
       const api = this.getApi();
-      const logs = await api.logs(query)
+      const logs: LogEntry[] = await api.logs(query)
       const parts = [
         `# Sage Query ${query} Logs`,
-        logs.reduce((acc, log) => `${acc}\n${log}`, ""),
-        "## Summary",
-        logs.reduce((acc, log) => `${acc}\n${log.summary ?? "No summary"}`, ""),
+        logs.reduce((acc, log) => `${JSON.stringify(log)}`, ""),
       ];
       const content = parts.join("\n\n");
 

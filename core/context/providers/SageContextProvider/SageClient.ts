@@ -10,7 +10,7 @@ interface SageClientOptions {
   resultsSize: number;
 }
 
-interface LogEntry {
+export interface LogEntry {
   msg: string;
   level: string;
   env: string;
@@ -21,9 +21,7 @@ interface LogEntry {
   [key: string]: string
 }
 
-interface QueryResult {
-  summary: string;
-}
+type QueryResult = LogEntry[]
 
 interface QueryResults {
   hits: LogEntry[];
@@ -46,7 +44,7 @@ export class SageClient {
 
   async logs(
     query: string,
-  ): Promise<Array<QueryResult>> {
+  ): Promise<QueryResult> {
     const endTime = new Date(); // now
     const startTime = new Date(endTime.getTime() - 60 * 60 * 1000); // -1h
     const request = {
@@ -54,6 +52,7 @@ export class SageClient {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${this.options.apiToken}`,
+        'Source': 'continue_dev',
       },
       body: JSON.stringify({
         query,
@@ -70,9 +69,9 @@ export class SageClient {
     if (response.status !== 200) {
       throw new Error(`Failed to fetch logs: ${response.statusText}`);
     }
-    const result = await response.json();
+    const { hits } = await response.json();
 
-    return result.map((logEntry: any) => ({
+    return hits.map((logEntry: LogEntry) => ({
       level: logEntry.level,
       msg: logEntry.msg,
     }));
